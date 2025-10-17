@@ -1,33 +1,89 @@
 # Chip_arch_for_evm
 
-## Block Diagram:
+## Block Diagram
 
-<img width="3647" height="2084" alt="voting chip" src="https://github.com/user-attachments/assets/03da19b1-0717-4373-9d30-b8589b6303f8" />
+![Voting Chip Block Diagram](https://github.com/user-attachments/assets/03da19b1-0717-4373-9d30-b8589b6303f8)
 
-## EXplanation:
+---
 
-__Memory_1__: This is where all the blocks shared by ethernet will be stored, from here the pointer will point to the block that needs to be processed and divide it into two, generally a drawer_1 and drawer_2. drawer_1 contains the id and verfication details of voter which are encrypted by his private key, and drawer_2 will contain the  id of the party for which the voter has given his his vote.
+## Explanation
 
-__Signing_decrypter__: This is a special kind of unit that takes the private key form the voter to decrypt the voter id and verification details such as name to check it with the database provided to the chip, to make sure voter is casting vote only once and the voter identity is human. This portion is not what i want, i am currently workiing on removong it but rn i am out of ideas, i mean what is even the point of having a private key if it needs to be shared with the fpga even though the key is being dropped after use.
+### **Memory_1**
+This is where all the blocks shared via Ethernet are stored.  
+From here, a pointer selects the block that needs to be processed and divides it into two parts:
+- **drawer_1** – contains the voter’s ID and verification details, which are encrypted using the voter’s private key.  
+- **drawer_2** – contains the ID of the party for which the voter has cast the vote.
 
-__Flag_1__: Its is just the flag that is used to set the counter a signal that the voter identity is confirmend and you are ready to increment the value to which the party id points.
+---
 
-__Counter__: A gray code based binary counter that is reprogrambale at the time of progamming state, increments the votes by one to which the voter id is pointed to, this portion will have three mainly states in its state machine. this are:
-- _Increment State_: this will increment the location which is marked by the party id which is givne in the input.
-- _Wait state_: this will wait for the falg_1 to get set till then preseve the operation and keep checking teh values of votes form previous cycle to next cycle to make sure no instruction is followed in that one clk cycle.
-- _Idle state_: this is the state at the time of programming allowing the registers to be programmed with new party ids.
+### **Signing_Decrypter**
+This is a special unit that takes the private key from the voter to decrypt voter ID and verification details such as name, and checks them against the database provided to the chip.  
+Its main purpose is to ensure that:
+- The voter casts a vote only once.  
+- The voter identity is valid (human and verified).  
 
-__ROM__: form this memory minimal number of control lines will be controlled like activating the reset state, adding the voters and removing the voters from the data base, adding and removing party list.
+However, this design currently poses a major concern — **there’s no point in having a private key if it must be shared with the FPGA**, even if the key is discarded after use. I am currently working on removing this block or finding a better approach, but for now, I’m short on ideas.
 
-__Hash Generation__: This is the unit where it takes input as state of memory_3, which stores the timestamps and paty id that are voted, this data is all random and not predictable perfect for a hash to generate truly random numbers to make a very unpredivtable key.
+---
 
-__Memory_3__: This unit will store the encrypted votes of the voters with a time stamp, to be used for the reverification of votes if needed. This will add +1 state of verfication in the chip. the hash algorithm will be secreat for now, till i need to replace this one too, hash is similar to the encrypter it is just a blach box integrated in hardware that only chip could crack in, but the codes that are used to make that hardware can be reverse engineered and hackers can make there own encrypter and hash to do the reverse and tamper the rom data with an ease, to ensure this will not happen depending on just one factor to verify will be stupid, so i need one more factor, question is what?
+### **Flag_1**
+A simple flag used to signal that the voter’s identity has been confirmed.  
+Once set, it indicates that the counter can safely increment the value corresponding to the selected party ID.
 
-## Conclusion:
+---
 
-- The block diagrm is the structure that is planned and needs to be improved to tackel the major flaws like :
-  - Privtae key sharing.
-  - Posiblility of hash and encrypter algorithm reverse engineered from the HDL codes.
-- Currently research is going on.
-- on positive side, ethernet functionality is tested and verfied to be working.
-- and the separate modles of each blocks are good and code tested. soon i will uploaad the cost of silicon for each module to estimate the area occupancy of the full chip. 
+### **Counter**
+A **Gray-code–based binary counter** that is **reprogrammable** during the programming state. It increments the vote count for the party ID pointed to by the input.
+
+The internal FSM of the counter consists of three main states:
+
+1. **Increment State:**  
+   Increments the location marked by the input party ID.
+
+2. **Wait State:**  
+   Waits for `Flag_1` to be set. During this state, it preserves the previous operation and keeps checking the vote values from the previous and current cycles to ensure no instruction is executed twice within the same clock cycle.
+
+3. **Idle State:**  
+   Active during the programming phase, allowing the registers to be updated with new party IDs.
+
+---
+
+### **ROM**
+The ROM controls minimal yet essential control lines such as:
+- Activating reset state  
+- Adding or removing voters from the database  
+- Adding or removing parties from the list  
+
+---
+
+### **Hash Generation**
+This unit takes the input from **Memory_3**, which stores timestamps and party IDs that have been voted.  
+This data is inherently random and unpredictable, making it ideal for generating hashes and producing truly random numbers — useful for creating secure, unpredictable keys.
+
+---
+
+### **Memory_3**
+This unit stores **encrypted votes** of voters along with their **timestamps**, to be used for vote re-verification if needed.  
+This adds another layer of verification within the chip.  
+
+The **hash algorithm** is currently confidential — similar to the encrypter, it’s a hardware-embedded black box that only the chip can interpret.  
+However, the algorithms used to create this hardware can be reverse-engineered, which would allow attackers to build custom encrypters or hash units capable of tampering with ROM data.  
+
+To prevent this, depending on just one verification factor is risky.  
+So, an additional independent verification factor is needed — **the question is: what should that be?**
+
+---
+
+## Conclusion
+
+- The current block diagram represents the planned structure of the chip.  
+- Major flaws that need to be addressed include:
+  - **Private key sharing**
+  - **Risk of reverse-engineering the hash/encryption algorithm from HDL code**
+- Research and improvements are ongoing to resolve these issues.  
+- On the positive side:
+  - **Ethernet functionality has been successfully tested and verified.**
+  - **All individual modules have been coded and tested successfully.**
+- The **next step** is to upload the estimated **silicon cost** for each module to determine the total area occupancy of the full chip.
+
+---
