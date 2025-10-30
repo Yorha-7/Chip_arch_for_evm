@@ -6,6 +6,10 @@
 
 ---
 
+## PUFs: 
+ i will be introducing the PUFS which will set the bits in a register that will be used to check the coorect and unique hardware. The PUF will follow the setting of fastest path in chip race condition where the challenge will be bit ti switch the path.
+ its input will be sorted from the control lines from the communication section.
+
 ## Explanation
 
 ### **Memory_1**
